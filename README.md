@@ -9,7 +9,7 @@
     - datafeed.py：基于盘口 tick 合成分钟线的数据源，实现 Backtrader DataBase
     - broker.py：交易执行（占位，待完善）
     - __init__.py：对外导出
-  - test.py：最小可运行示例
+  - test.py：最小可运行示例（双均线）
   - 1.ipynb：开发草稿
 
 ## 快速开始
@@ -63,23 +63,46 @@ python test.py
 
 ## 使用示例
 
-参考 `test.py`：
+参考 `test.py`（双均线示例）：
 
 ```python
 import backtrader as bt
 from tianqin_backtrader.store import MyStore
 
-class mystrategy(bt.Strategy):
+# 简单双均线策略示例
+# 逻辑：
+# - 计算短期与长期移动均线
+# - 短均线上穿长均线 -> 产生买入信号
+# - 短均线下穿长均线 -> 产生卖出/平仓信号
+class DualMovingAverage(bt.Strategy):
+    params = dict(fast=5, slow=20)
+
     def __init__(self):
-        pass
+        # 使用收盘价作为计算源
+        self.dataclose = self.datas[0].close
+        # 定义移动均线指标
+        self.sma_fast = bt.ind.SMA(self.dataclose, period=self.p.fast)
+        self.sma_slow = bt.ind.SMA(self.dataclose, period=self.p.slow)
+        # 交叉指标：>0 上穿，<0 下穿，=0 持平
+        self.crossover = bt.ind.CrossOver(self.sma_fast, self.sma_slow)
+
     def next(self):
-        pass
+        # 当前K线时间
+        dt = self.datas[0].datetime.datetime(0)
+        # 无持仓时，出现上穿信号 -> 买入
+        if not self.position and self.crossover > 0:
+            print(f"[{dt}] 买入信号: close={self.dataclose[0]:.2f}")
+            # 如需真实下单，开启：self.buy()
+        # 有持仓时，出现下穿信号 -> 平仓
+        elif self.position and self.crossover < 0:
+            print(f"[{dt}] 卖出/平仓信号: close={self.dataclose[0]:.2f}")
+            # 如需真实平仓，开启：self.close()
 
 cerebro = bt.Cerebro()
 store = MyStore()
 data = store.getdata(instrument='SHFE.cu2512')
 cerebro.adddata(data)
-cerebro.addstrategy(mystrategy)
+cerebro.addstrategy(DualMovingAverage)
 cerebro.run()
 ```
 
