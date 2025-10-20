@@ -21,7 +21,7 @@ class DualMovingAverage(bt.Strategy):
 # 创建引擎
 cerebro = bt.Cerebro()
 # 连接天勤（请在 MyStore 中配置您的鉴权信息）
-store = MyStore(key='x6504368', value='x6504368')
+store = MyStore(key='xxxxx', value='xxxxx')
 # 订阅合约（示例：上期所铜主力，请按需修改）
 data = store.getdata(instrument='SHFE.cu2512')
 # 加载数据与策略
