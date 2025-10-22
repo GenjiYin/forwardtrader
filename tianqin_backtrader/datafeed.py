@@ -1,21 +1,12 @@
 import backtrader as bt
 import time
 import datetime
-from .session_calendar import is_trading_time
+from .session_calendar import is_trading_time, is_trading_daily, is_trading_night
 
 """
 还需要将数据保存下来!!!!!!!!!!!!
-还要就爱那个历史数据导入进去
+还要将历史数据导入进去
 """
-def trans_time(ts):
-    try:
-        from datetime import datetime
-        timestamp_s = ts / 1e9
-        dt_object = datetime.fromtimestamp(timestamp_s)
-        formatted_time = dt_object.strftime("%Y-%m-%d %H:%M:%S")
-        return formatted_time
-    except:
-        return ts
 
 class Mydatafeed(bt.feed.DataBase):
     params = (
@@ -29,6 +20,9 @@ class Mydatafeed(bt.feed.DataBase):
         self.openinterest = []
         self.mintue_datetime = []
         self.amount = []
+
+        self.trading_daily = None         # 用来记录当天日盘是否会开盘
+        self.trading_night = None         # 用来记录当天夜盘是否会开盘
     
     def start(self):
         pass
@@ -63,15 +57,23 @@ class Mydatafeed(bt.feed.DataBase):
         """
         now = datetime.datetime.now()
 
-        if not is_trading_time(self.p.dataname):
+        if (self.trading_daily is None or self.trading_night is None) or (now.hour==8 and now.minute==56):
+            # 判断早夜盘是否存在
+            self.trading_daily = is_trading_daily()
+            self.trading_night = is_trading_night()
+
+        if not self.trading_daily:   # 早盘没有那夜盘也一般没有
             return None
 
-        tick = self.p.store.tianqin.get_quote(self.p.dataname)
-        ok = self.p.store.tianqin.wait_update(deadline=time.time()+10)
-        if not ok:   # 收盘之后
-            print("行情结束, 等待")
+        if not is_trading_time(self.p.dataname):
+            # 非交易时间段, 不管
             return None
         
+        self.p.store._fix_time_reconnect()
+
+        tick = self.p.store.tianqin.get_quote(self.p.dataname)
+        for _ in range(2):
+            ok = self.p.store.tianqin.wait_update(deadline=time.time()+5)
         
         if len(self.price) == 0:
             # 没有数据的时候添加数据

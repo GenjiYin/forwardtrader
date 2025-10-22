@@ -1,6 +1,7 @@
 import backtrader as bt
 from tqsdk import TqApi, TqSim, TqAuth, TqKq
 from .datafeed import Mydatafeed
+from .broker import MyBroker
 import time
 import datetime
 
@@ -16,37 +17,39 @@ class MyStore:
         self.ins = instrument
         return Mydatafeed(dataname=instrument, store=self)
     
-    def retry(self):
-        """
-        重连函数, 天勤量化在早盘或者午盘断线时, 会自动断线, 需要重新连接（有待完善）
-        1. 早上9点的时候(重启一次)
-        2. 晚上9点的时候(重启一次)
-        3. 中途断线的时候, 一直重启
-        """
+    def getbroker(self):
+        return MyBroker(store=self)
+    
+    def _reconnect(self):
+        """重连"""
+        try:
+            # 关闭现有连接
+            self.tianqin.close()
+            # 重连
+            self.tianqin = TqApi(TqKq(), auth=TqAuth(self.key, self.value))
+        except Exception as e:
+            print('重连失败: ', e)
+
+    def _fix_time_reconnect(self):
+        """固定时点重连"""
         now = datetime.datetime.now()
-        if now.hour == 9 and now.minute == 0:  # 早上开盘的时候重启一次
-            self.tianqin.close()
-            self.tianqin = TqApi(TqKq(), auth=TqAuth(self.key, self.value))
         
-        if now.hour == 21 and now.minute == 0:  # 夜盘的时候重启一次
-            self.tianqin.close()
-            self.tianqin = TqApi(TqKq(), auth=TqAuth(self.key, self.value))
+        # 早盘重连
+        if now.hour == 9 and now.minute == 0:
+            print(f"{now} 早盘固定时点重连")
+            self._reconnect()
+            return None
         
-        if now.hour >= 9 and now.hour <= 15:  # 中途断线时, 一直重启
-            for _ in range(2):
-                ok = self.tianqin.wait_update(deadline=time.time()+1)
-            if not ok:
-                self.tianqin.close()
-                self.tianqin = TqApi(TqKq(), auth=TqAuth(self.key, self.value))
+        # 下午重连
+        if now.hour == 13 and now.minute == 30:
+            print(f"{now} 下午固定时点重连")
+            self._reconnect()
+            return None
         
-        # while True:
-        #     kline = self.tianqin.get_kline_serial(instrument, 10)
-        #     conn = self.tianqin.wait_update(deadline=time.time()+10)
-        #     if not conn:
-        #         print("天勤量化重新连接中......")
-        #         self.tianqin = TqApi(TqSim(init_balance=100000), auth=TqAuth(self.key, self.value))
-                
-        #         kline = self.tianqin.get_kline_serial(instrument, 10)
-        #         conn = self.tianqin.wait_update(deadline=time.time()+10)
-        #     else:
-        #         return
+        # 夜盘重连
+        if now.hour == 21 and now.minute == 0:
+            print(f"{now} 夜盘固定时点重连")
+            self._reconnect()
+            return None
+        
+        return True

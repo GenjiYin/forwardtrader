@@ -7,10 +7,12 @@
   - tianqin_backtrader/
     - store.py：账户与行情连接管理（TqApi 会话、重连机制、数据入口）
     - datafeed.py：基于盘口 tick 合成分钟线的数据源，实现 Backtrader DataBase
-    - broker.py：交易执行（占位，待完善）
+    - broker.py：交易执行（已实现基础功能）
+    - session_calendar.py：交易时间判断工具
     - __init__.py：对外导出
   - test.py：最小可运行示例（双均线）
-  - 1.ipynb：开发草稿
+  - test.ipynb：Jupyter 笔记本测试文件
+  - figure/：项目相关图片资源
 
 ## 快速开始
 
@@ -28,6 +30,12 @@ pip install backtrader tqsdk
 python test.py
 ```
 
+- Jupyter 笔记本测试：
+
+```bash
+jupyter notebook test.ipynb
+```
+
 示例流程：
 - MyStore 建立到天勤的连接，并提供 `getdata(symbol)` 返回 Backtrader 数据源
 - Mydatafeed 监听 tick，按分钟切分并合成 OHLCV + openinterest/amount，供 Backtrader 驱动
@@ -37,10 +45,12 @@ python test.py
 
 - 实时数据：使用 TqKq 通道 + `wait_update` 拉取最新行情
 - 分钟合成：按分钟变更合成一根 K 线（open/high/low/close/volume/openinterest/amount）
-- 重连逻辑（基础版）：
-  - 9:00、21:00 定时重建会话
+- 重连逻辑（增强版）：
+  - 9:00、13:30、21:00 定时重建会话
   - 交易时段内 `wait_update` 失败时自动重连
+  - 智能交易时间判断（支持日盘/夜盘识别）
 - `islive()` 返回 True，适配 Backtrader 实盘流
+- Broker 集成：支持真实交易执行
 
 ## 当前进度
 
@@ -51,15 +61,17 @@ python test.py
   - 最小示例脚本可跑通
 
 - 进行中
-  - 断线重连策略细化（时段识别、异常回退、节假日/收盘处理）
+  - 断线重连策略优化（异常回退、节假日/收盘处理）
   - 历史数据回填/导入
   - 数据持久化与行情落盘
+  - 策略参数优化
 
 - 待办
-  - Broker 下单/撤单通道实现与风控
+  - 完善 Broker 风控机制
   - 参数化配置（key/value、订阅合约、频率、时区等）
-  - 日志与监控
+  - 日志与监控系统
   - 文档与用法示例完善
+  - 性能优化与稳定性提升
 
 ## 使用示例
 

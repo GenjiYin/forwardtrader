@@ -1,5 +1,7 @@
 import datetime as dt
-# import pandas_market_calendars as mcal
+import requests
+from lxml import etree
+import datetime
 
 """
 但是这样依旧只能判断交易时间，没法判断交易日, 所以我们要结合wait_update来判断
@@ -22,6 +24,24 @@ CLASS_SESSIONS = {
     "IH": [("09:30", "11:30"), ("13:00", "15:00")],
     "IC": [("09:30", "11:30"), ("13:00", "15:00")],
 }
+
+def is_trading_night():
+    # 判断夜盘是否交易
+    url = "http://www.gtjaqh.com/pc/calendar"
+    params = {"date": (datetime.datetime.now() + datetime.timedelta(days=1)).strftime("%Y-%m-%d").replace('-', '')}
+    r = requests.get(url, params=params, verify=True)
+    html = etree.HTML(r.text)
+    cond0 = True if len(html.xpath('//table'))!=0 else False
+    return cond0
+
+def is_trading_daily():
+    # 判断日盘是否交易
+    url = "http://www.gtjaqh.com/pc/calendar"
+    params = {"date": datetime.datetime.now().strftime("%Y-%m-%d").replace('-', '')}
+    r = requests.get(url, params=params, verify=True)
+    html = etree.HTML(r.text)
+    cond0 = True if len(html.xpath('//table'))!=0 else False
+    return cond0
 
 def is_trading_time(symbol, current_time=None):
     """
