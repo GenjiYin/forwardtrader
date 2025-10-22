@@ -9,10 +9,11 @@ class MyStore:
         print("天勤量化连接中......")
         self.key = key
         self.value = value
-        self.tianqin = TqApi(TqKq(), auth=TqAuth(key, value))
+        self.tianqin = TqApi(TqKq(), auth=TqAuth(self.key, self.value))
         print("天勤连接成功......")
         
     def getdata(self, instrument):
+        self.ins = instrument
         return Mydatafeed(dataname=instrument, store=self)
     
     def retry(self):
@@ -49,4 +50,3 @@ class MyStore:
         #         conn = self.tianqin.wait_update(deadline=time.time()+10)
         #     else:
         #         return
-            

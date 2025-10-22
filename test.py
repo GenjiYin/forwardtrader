@@ -16,12 +16,12 @@ class DualMovingAverage(bt.Strategy):
         # 当前K线时间
         current_time = self.data.datetime.time()
         current_datetime = self.data.datetime.datetime()
-        print(current_datetime, self.data0.close[0])
+        print(current_datetime, '时刻收盘价: ', self.data0.close[0])
 
 # 创建引擎
 cerebro = bt.Cerebro()
-# 连接天勤（请在 MyStore 中配置您的鉴权信息）
-store = MyStore(key='xxxxx', value='xxxxx')
+# 连接天勤（请在 MyStore 中配置您的登录信息）
+store = MyStore(key='x6504368', value='x6504368')
 # 订阅合约（示例：上期所铜主力，请按需修改）
 data = store.getdata(instrument='SHFE.cu2512')
 # 加载数据与策略

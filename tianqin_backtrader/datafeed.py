@@ -1,8 +1,7 @@
 import backtrader as bt
 import time
 import datetime
-from collections import deque
-from backtrader.utils import date2num
+from .session_calendar import is_trading_time
 
 """
 还需要将数据保存下来!!!!!!!!!!!!
@@ -56,18 +55,23 @@ class Mydatafeed(bt.feed.DataBase):
         self.mintue_datetime = []
     
     def _load(self):
-        # self.p.retry(self.p.dataname)
         """
-        获取数据(只能自己合成, 使用盘口数据合成)
+        获取数据
+        这里最前面需要写一个重启机制
+        1. 非交易时间段: 直接return None
+        2. 交易时间段, 开盘那一刻(9点)和夜盘(21点)那一刻重新连接, 然后wait_update返回True可以继续, 否则None(因为有可能节假日也是false)
         """
-        # 这里完善重启逻辑
+        now = datetime.datetime.now()
+
+        if not is_trading_time(self.p.dataname):
+            return None
+
         tick = self.p.store.tianqin.get_quote(self.p.dataname)
         ok = self.p.store.tianqin.wait_update(deadline=time.time()+10)
         if not ok:   # 收盘之后
             print("行情结束, 等待")
             return None
         
-        # tick = self.p.store.tianqin.get_quote(self.p.dataname)
         
         if len(self.price) == 0:
             # 没有数据的时候添加数据
@@ -84,10 +88,12 @@ class Mydatafeed(bt.feed.DataBase):
             self.lines.openinterest[0] = self.openinterest[-1]
             
             self._clear()
+            self._append_tick(tick)
         
             time.sleep(0.5)
             return True
         else:
+            self._append_tick(tick)
             return None
         
         
