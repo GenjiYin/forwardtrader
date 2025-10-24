@@ -46,10 +46,32 @@ class MyBroker(BrokerBase):
         return order
     
     def sell_close(self, instrument:str, size:int, limit_price:float=None):
+        """平多"""
+        order = self.p.store.tianqin.insert_order(
+            symbol=instrument, 
+            direction='SELL', 
+            offset='CLOSE', 
+            volume=size, 
+            limit_price=limit_price
+        )
+        return order
+    
+    def sell_open(self, instrument:str, size:int, limit_price:float=None):
         """开空"""
         order = self.p.store.tianqin.insert_order(
             symbol=instrument, 
             direction='SELL', 
+            offset='OPEN', 
+            volume=size, 
+            limit_price=limit_price
+        )
+        return order
+    
+    def buy_close(self, instrument:str, size:int, limit_price:float=None):
+        """平空"""
+        order = self.p.store.tianqin.insert_order(
+            symbol=instrument, 
+            direction='BUY', 
             offset='CLOSE', 
             volume=size, 
             limit_price=limit_price
