@@ -10,7 +10,7 @@
     - broker.py：交易执行（已实现基础功能）
     - session_calendar.py：交易时间判断工具
     - __init__.py：对外导出
-  - test.py：最小可运行示例（双均线）
+  - 最小可运行示例（双均线）
   - test.ipynb：Jupyter 笔记本测试文件
   - figure/：项目相关图片资源
 
@@ -73,7 +73,7 @@ jupyter notebook test.ipynb
 
 ## 使用示例
 
-参考 `test.py`（双均线示例）：
+参考（双均线示例）：
 
 ```python
 import backtrader as bt
@@ -99,14 +99,19 @@ class DualMovingAverage(bt.Strategy):
     def next(self):
         # 当前K线时间
         dt = self.datas[0].datetime.datetime(0)
+
+        # 获取持仓
+        pos = self.broker.get_account_position(self.data0._name)
+
         # 无持仓时，出现上穿信号 -> 买入
         if not self.position and self.crossover > 0:
             print(f"[{dt}] 买入信号: close={self.dataclose[0]:.2f}")
-            # 如需真实下单，开启：self.buy()
+            self.broker.buy_open(self.data0._name, self.dataclose[0], size=1)
+
         # 有持仓时，出现下穿信号 -> 平仓
         elif self.position and self.crossover < 0:
             print(f"[{dt}] 卖出/平仓信号: close={self.dataclose[0]:.2f}")
-            # 如需真实平仓，开启：self.close()
+            self.broker.sell_close(self.data0._name, self.dataclose[0], size=1)
 
 cerebro = bt.Cerebro()
 store = MyStore()
