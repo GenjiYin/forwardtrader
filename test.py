@@ -10,21 +10,21 @@ class DualMovingAverage(bt.Strategy):
     params = dict(fast=5, slow=20)
 
     def __init__(self):
-        pass
+        self.dataclose = self.datas[0].close
 
     def next(self):
         # 当前K线时间
         current_time = self.data.datetime.time()
         current_datetime = self.data.datetime.datetime()
-        # print(current_datetime, '时刻收盘价: ', self.data0.close[0])
+        print(current_datetime, '时刻bidprice: ', self.data0.bid_price[0])
         pos = self.broker.get_account_position(self.data0._name)
-        print(current_datetime, '可用资金: ', self.broker.getcash(), "持仓市值: ", self.broker.getvalue())
+        print(current_datetime, '可用资金: ', self.broker.getcash(), "总资金: ", self.broker.getvalue())
         print(self.data0._name, " 持仓: ", pos)
 
 # 创建引擎
 cerebro = bt.Cerebro()
 # 连接天勤（请在 MyStore 中配置您的登录信息）
-store = MyStore(key='xxxxxx', value='xxxxxx')
+store = MyStore(key='x6504368', value='x6504368')
 # 订阅合约（示例：上期所铜主力，请按需修改）
 data = store.getdata(instrument='SHFE.cu2512')
 # 加载经济商

@@ -13,6 +13,7 @@ class Mydatafeed(bt.feed.DataBase):
         ("store", None), 
     )
     
+    lines = ("bid_price", "ask_price", )
     def __init__(self):
         super(Mydatafeed, self).__init__()
         self.price = []
@@ -88,6 +89,8 @@ class Mydatafeed(bt.feed.DataBase):
             self.lines.low[0] = min(self.price)
             self.lines.volume[0] = self.volume[-1]
             self.lines.openinterest[0] = self.openinterest[-1]
+            self.lines.bid_price[0] = tick['bid_price1']
+            self.lines.ask_price[0] = tick['ask_price1']
             
             self._clear()
             self._append_tick(tick)

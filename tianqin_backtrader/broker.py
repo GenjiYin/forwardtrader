@@ -55,3 +55,6 @@ class MyBroker(BrokerBase):
             limit_price=limit_price
         )
         return order
+    
+    def memory_cache(self):
+        return
