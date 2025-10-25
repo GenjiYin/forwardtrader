@@ -124,6 +124,7 @@ class Mydatafeed(bt.feed.DataBase):
                     continue
                 
                 self.p.store._fix_time_reconnect()
+                self.p.store.save()
 
                 tick = self.p.store.tianqin.get_quote(self.p.dataname)
                 for _ in range(2):

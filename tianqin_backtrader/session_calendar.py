@@ -3,10 +3,6 @@ import requests
 from lxml import etree
 import datetime
 
-"""
-但是这样依旧只能判断交易时间，没法判断交易日, 所以我们要结合wait_update来判断
-"""
-
 # 交易时段映射表
 CLASS_SESSIONS = {
     "RB": [("09:00", "10:15"), ("10:30", "11:30"), ("13:30", "15:00"), ("21:00", "23:00")],

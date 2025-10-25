@@ -1,9 +1,12 @@
 import backtrader as bt
 from tqsdk import TqApi, TqSim, TqAuth, TqKq
 from .datafeed import Mydatafeed
+from .session_calendar import CLASS_SESSIONS
 from .broker import MyBroker
 import time
 import datetime
+import pandas as pd
+import os
 
 class MyStore:
     def __init__(self, key='xxxxx', value='xxxxxx'):
@@ -15,6 +18,15 @@ class MyStore:
         
         # ✅ 新增：记录已执行重连的“分钟键”
         self._reconnect_done = set()
+
+        # 新建一个文件夹专门用来储存持仓、订单成交情况、委托单
+        current_dir = os.getcwd()
+        self.save_path = os.path.join(current_dir, 'order_file')
+        if not os.path.exists(self.save_path):
+            os.makedirs(self.save_path)
+
+        # 记录保存文件的执行情况
+        self.save_done = set()
         
     def getdata(self, instrument, lookback=False):
         self.ins = instrument
@@ -38,11 +50,11 @@ class MyStore:
         now = datetime.datetime.now()
         minute_key = now.strftime("%H:%M")  # 例如 "09:00"
         
-        # ✅ 每天 00:00 清空重连记录
-        if now.hour == 0 and now.minute == 0:
-            if "00:00" not in self._reconnect_done:
+        # ✅ 每天 21:20 清空重连记录
+        if now.hour == 21 and now.minute == 20:
+            if "21:20" not in self._reconnect_done:
                 self._reconnect_done.clear()
-                self._reconnect_done.add("00:00")
+                self._reconnect_done.add("21:20")
             return None
 
         # ✅ 如果这一分钟已经重连过，就跳过
@@ -71,3 +83,78 @@ class MyStore:
             return None
         
         return True
+    
+    def _save_csv(self, save_type):
+        """
+        保存的文件类型
+        可选: trade、order、position、account
+        """
+        if save_type == 'trade':
+            data = pd.DataFrame([dict(i) for i in self.api.get_trade().values()])
+            if len(data) == 0:
+                return
+            data['trade_date_time'] = data['trade_date_time'].apply(lambda x: datetime.datetime.fromtimestamp(x / 10**9).strftime('%Y-%m-%d %H:%M:%S'))
+        elif save_type == 'order':
+            data = pd.DataFrame([dict(i) for i in self.api.get_order().values()])
+            if len(data) == 0:
+                return
+            data['insert_date_time'] = data['insert_date_time'].apply(lambda x: datetime.datetime.fromtimestamp(x / 10**9).strftime('%Y-%m-%d %H:%M:%S'))
+        elif save_type == 'position':
+            data = pd.DataFrame([dict(i) for i in self.api.get_position().values()])
+            if len(data) == 0:
+                return
+            data['date'] = datetime.datetime.now().strftime('%Y-%m-%d')
+        elif save_type == 'account':
+            data = pd.DataFrame([{k: v for k, v in zip(list(self.api.get_account().keys()), list(self.api.get_account().values()))}])
+            if len(data) == 0:
+                return
+            data['date'] = datetime.datetime.now().strftime('%Y-%m-%d')
+        else:
+            raise ValueError('参数save_type选项只能选择trade、order、position、account')
+        
+        file_path = os.path.join(self.save_path, save_type + '.csv')
+        if not os.path.exists(file_path):
+            data.to_csv(file_path, index=False)
+
+        else:
+            d = pd.read_csv(file_path)
+            d = pd.concat([d, data], axis=0).reset_index(drop=True)
+            if save_type == 'order':
+                d = d.drop_duplicates(subset=['order_id'], keep='last')
+            elif save_type == 'position':
+                d = d.drop_duplicates(subset=['instrument_id'], keep='last')
+            elif save_type == 'trade':
+                d = d.drop_duplicates(keep='last')
+            elif save_type == 'account':
+                d = d = d.drop_duplicates(subset=['date'], keep='last')
+            d.to_csv(file_path, index=False)
+
+    def save(self):
+        # 获取该品种最后时刻
+        sessions = CLASS_SESSIONS.get(self.ins.split('.')[-1][:2].upper())
+        final_time = sessions[-1][-1]
+        final_time = datetime.datetime.strptime(final_time, "%H:%M")
+        clear_time = final_time + datetime.timedelta(minutes=1)
+
+        now = datetime.datetime.now()
+        minute_key = now.strftime("%H:%M")  # 例如 "09:00"
+
+        if now.hour == clear_time.hour and now.minute == clear_time.minute:
+            self.save_done.clear()
+            self.save_done.add(minute_key)
+            return None
+
+        # 下午保存
+        if now.hour == 15 and now.minute == 0:
+            print(f"{now} 交易记录保存")
+            self._save_csv()
+            self.save_done.add(minute_key)
+            return None
+        
+        # 凌晨保存
+        if now.hour == final_time.hour and now.minute == final_time.minute:
+            print(f"{now} 交易记录保存")
+            self._save_csv()
+            self.save_done.add(minute_key)
+            return None
+        
