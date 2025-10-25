@@ -16,9 +16,9 @@ class MyStore:
         # ✅ 新增：记录已执行重连的“分钟键”
         self._reconnect_done = set()
         
-    def getdata(self, instrument):
+    def getdata(self, instrument, lookback=False):
         self.ins = instrument
-        return Mydatafeed(dataname=instrument, store=self)
+        return Mydatafeed(dataname=instrument, store=self, lookback=lookback)
     
     def getbroker(self):
         return MyBroker(store=self)

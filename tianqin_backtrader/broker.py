@@ -1,6 +1,4 @@
 from backtrader.broker import BrokerBase
-from backtrader.order import Order, OrderBase
-from backtrader.position import Position
 
 class MyBroker(BrokerBase):
     params = (
