@@ -53,6 +53,7 @@ class Mydatafeed(bt.feed.DataBase):
         data = self.p.store.tianqin.get_kline_serial('SHFE.rb2512', duration_seconds=60, data_length=10000)
         df = data.copy().sort_values("datetime")
         df['datetime'] = df['datetime'].apply(trans_time)
+        df = df[df['datetime']>=df[df['datetime'].str.contains(" 21:00")]['datetime'].iloc[0]]
         for i in range(len(df)):
             msg = df.iloc[i].to_dict()
             msg['datetime'] = date2num(datetime.datetime.strptime(msg['datetime'], '%Y-%m-%d %H:%M:%S'))

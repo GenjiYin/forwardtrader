@@ -43,7 +43,7 @@ class DualMovingAverage(bt.Strategy):
 # 创建引擎
 cerebro = bt.Cerebro()
 # 连接天勤（请在 MyStore 中配置您的登录信息）
-store = MyStore(key='xxxxxx', value='xxxxxxx')
+store = MyStore(key='xxxxx', value='xxxxxxxx')
 # 订阅合约（示例：上期所铜主力，请按需修改）
 data = store.getdata(instrument='SHFE.cu2512', lookback=True)
 # 加载经济商
@@ -51,7 +51,7 @@ broker = store.getbroker()
 cerebro.setbroker(broker)
 # 加载数据与策略
 cerebro.adddata(data)
-cerebro.resampledata(data, timeframe=bt.TimeFrame.Days)
+# cerebro.resampledata(data, timeframe=bt.TimeFrame.Days)
 cerebro.addstrategy(DualMovingAverage, datafeed=data)
 # 运行
 cerebro.run()
