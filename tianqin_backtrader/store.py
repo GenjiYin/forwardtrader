@@ -1,6 +1,6 @@
 import backtrader as bt
 from tqsdk import TqApi, TqSim, TqAuth, TqKq
-from .datafeed import Mydatafeed
+from .datafeed import Mydatafeed, Dailyfeed
 from .session_calendar import CLASS_SESSIONS
 from .broker import MyBroker
 import time
@@ -31,6 +31,9 @@ class MyStore:
     def getdata(self, instrument, lookback=False):
         self.ins = instrument
         return Mydatafeed(dataname=instrument, store=self, lookback=lookback)
+    
+    def get_daily_data(self, instrument, lookback=False):
+        return Dailyfeed(dataname=instrument, store=self, lookback=lookback)
     
     def getbroker(self):
         return MyBroker(store=self)
