@@ -47,7 +47,7 @@ class DualMovingAverage(bt.Strategy):
 # 创建引擎
 cerebro = bt.Cerebro()
 # 连接天勤（请在 MyStore 中配置您的登录信息）
-store = MyStore(key='x6504368', value='q6504368')
+store = MyStore(key='xxxx', value='xxxxx')
 # 订阅合约分钟（示例：上期所铜主力，请按需修改）
 data = store.getdata(instrument='SHFE.au2512', lookback=40)    # 最多回看40天的分钟k线!!!!
 # data2 = store.getdata(instrument='SHFE.au2512', lookback=40)
