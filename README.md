@@ -1,229 +1,238 @@
-# 天勤量化 x Backtrader 实盘接入
+# Tianqin Quantitative x Backtrader Live Trading Integration
 
-将天勤量化行情/账户对接到 Backtrader，支持以 Backtrader 策略框架进行实盘运行与分钟级数据合成。
+<div align="center">
+  
+[![中文](https://img.shields.io/badge/中文-README__zh.md-red)](README_zh.md)
+[![English](https://img.shields.io/badge/English-README.md-green)](README.md)
 
-- 技术栈：Backtrader + TqSdk（TqApi/TqKq/TqAuth）
-- 目录结构：
+*[English](README.md) | [中文](README_zh.md)*
+
+</div>
+
+Integrate Tianqin quantitative market data and trading accounts with Backtrader, supporting live trading and minute-level data synthesis using the Backtrader strategy framework.
+
+- Technology Stack: Backtrader + TqSdk (TqApi/TqKq/TqAuth)
+- Directory Structure:
   - tianqin_backtrader/
-    - store.py：账户与行情连接管理（TqApi 会话、智能重连机制、数据入口）
-    - datafeed.py：基于盘口 tick 合成分钟线的数据源，实现 Backtrader DataBase
-    - broker.py：完整交易执行系统（支持四向交易、智能平仓、持仓管理）
-    - session_calendar.py：交易时间判断工具（支持多品种、日夜盘识别）
-    - __init__.py：对外导出
-    - performance_tracker.py：交易绩效记录管理器（自动保存交易数据）
-  - test.py：调试样例（支持多空双向交易）
-  - test.ipynb：Jupyter 笔记本测试文件
-  - figure/：项目相关图片资源
+    - store.py: Account and market connection management (TqApi session, intelligent reconnection, data entry)
+    - datafeed.py: Tick-based minute bar data source, implements Backtrader DataBase
+    - broker.py: Complete trading execution system (supports four-way trading, intelligent position closing, position management)
+    - session_calendar.py: Trading time judgment tool (supports multiple products, day/night session identification)
+    - __init__.py: External exports
+    - performance_tracker.py: Trading performance recorder (automatically saves trading data)
+  - test.py: Debug example (supports long/short two-way trading)
+  - test.ipynb: Jupyter notebook test file
+  - figure/: Project related image resources
 
-## 快速开始
+## Quick Start
 
-### 环境准备
-安装python>=3.12, 使用pip命令安装相关库
+### Environment Setup
+Install python>=3.12, use pip to install related libraries
 
 ```bash
 pip install backtrader tqsdk
 ```
 
-### 配置账户
-在 `test.py` 中设置您的天勤账户信息：
+### Account Configuration
+Set your Tianqin account information in `test.py`:
 ```python
-store = MyStore(key='您的天勤账号', value='您的天勤密码')
+store = MyStore(key='your_tianqin_account', value='your_tianqin_password')
 ```
 
-### 运行策略
+### Run Strategy
 
 ```bash
 python test.py
 ```
 
-### Jupyter 测试
+### Jupyter Testing
 
 ```bash
 jupyter notebook test.ipynb
 ```
 
-### 系统架构
+### System Architecture
 
-1. **连接管理**：`MyStore` 建立与天勤的稳定连接，提供智能重连机制
-2. **数据流**：`Mydatafeed` 实时监听 tick 数据，按分钟合成 OHLCV + 买卖价
-3. **交易执行**：`MyBroker` 提供完整的四向交易功能与持仓管理
-4. **策略框架**：标准 Backtrader 策略，支持复杂交易逻辑
+1. **Connection Management**: `MyStore` establishes stable connection with Tianqin, provides intelligent reconnection mechanism
+2. **Data Flow**: `Mydatafeed` real-time listens to tick data, synthesizes OHLCV + bid/ask by minute
+3. **Trading Execution**: `MyBroker` provides complete four-way trading functionality and position management
+4. **Strategy Framework**: Standard Backtrader strategy, supports complex trading logic
 
-### 核心特性
+### Core Features
 
-- ✅ **实盘级稳定性**：多重重连机制，确保交易连续性
-- ✅ **完整交易功能**：开多、开空、平多、平空，支持今昨仓分离
-- ✅ **智能时间管理**：自动识别交易时段，支持多品种
-- ✅ **实时数据流**：tick 级数据转分钟 K 线，包含买卖价信息
-- ✅ **灵活策略开发**：标准 Backtrader 策略框架，易于扩展
-- ✅ **历史数据加载**：实盘过程中自动加载历史数据，支持策略初始化
-- ✅ **成交记录保存**：自动保存所有成交记录，支持交易数据持久化
+- ✅ **Live Trading Stability**: Multiple reconnection mechanisms ensure trading continuity
+- ✅ **Complete Trading Functions**: Long open, short open, long close, short close, supports today/yesterday position separation
+- ✅ **Intelligent Time Management**: Automatically identifies trading sessions, supports multiple products
+- ✅ **Real-time Data Flow**: Tick-level data converted to minute K-lines, includes bid/ask information
+- ✅ **Flexible Strategy Development**: Standard Backtrader strategy framework, easy to extend
+- ✅ **Historical Data Loading**: Automatically loads historical data during live trading, supports strategy initialization
+- ✅ **Trade Record Saving**: Automatically saves all trade records, supports trading data persistence
 
-## 实盘特性
+## Live Trading Features
 
-### 数据流特性
-- **实时行情**：使用 TqKq 通道 + `wait_update` 拉取最新 tick 数据
-- **分钟合成**：按分钟变更自动合成 K 线（OHLCV + 买卖价 + 持仓量）
-- **日线聚合**：新增`Dailyfeed`支持夜盘21:00到次日15:00的K线聚合，符合期货市场交易习惯
-- **买卖价数据**：实时提供 bid/ask 价格，支持高频策略
-- **多品种支持**：支持商品期货、金融期货等多品种交易
-- **历史数据加载**：实盘启动时自动加载最近一个月历史数据，用于策略初始化和技术指标计算
-- **数据筛选优化**：历史数据自动筛选从21:00夜盘开始的数据，确保数据完整性
+### Data Flow Features
+- **Real-time Market Data**: Uses TqKq channel + `wait_update` to pull latest tick data
+- **Minute Synthesis**: Automatically synthesizes K-lines by minute change (OHLCV + bid/ask + open interest)
+- **Daily Aggregation**: New `Dailyfeed` supports K-line aggregation from night session 21:00 to next day 15:00,符合futures market trading habits
+- **Bid/Ask Data**: Real-time provides bid/ask prices, supports high-frequency strategies
+- **Multi-product Support**: Supports commodity futures, financial futures and other multi-product trading
+- **Historical Data Loading**: Automatically loads recent one month of historical data at live trading startup, for strategy initialization and technical indicator calculation
+- **Data Filtering Optimization**: Historical data automatically filters data starting from 21:00 night session, ensures data integrity
 
-### 历史数据管理
-- **自动加载**：实盘启动时自动加载历史K线数据（默认最近10000分钟）
-- **阶段识别**：内置`history_phase`属性标识当前数据阶段（历史数据/实盘数据）
-- **策略控制**：策略可通过判断`datafeed.history_phase`来跳过历史数据阶段，避免在历史数据上产生交易信号
-- **无缝切换**：历史数据加载完成后自动切换到实盘数据流，确保交易连续性
+### Historical Data Management
+- **Automatic Loading**: Automatically loads historical K-line data at live trading startup (default recent 10000 minutes)
+- **Phase Identification**: Built-in `history_phase` attribute identifies current data phase (historical data/live data)
+- **Strategy Control**: Strategy can skip historical data phase by checking `datafeed.history_phase`, avoids generating trading signals on historical data
+- **Seamless Switching**: Automatically switches to live data stream after historical data loading completes, ensures trading continuity
 
-### 连接与重连
-- **智能重连**：
-  - 固定时点重连：9:00、13:30、21:00 定时重建会话
-  - 异常重连：交易时段内连接异常时自动重连
-  - 每日重置：21:20 自动清空重连记录，优化夜盘交易体验
-- **交易时间识别**：智能判断日盘/夜盘交易时段
-- **假期识别**：结合网络日历判断交易日与假期
+### Connection & Reconnection
+- **Intelligent Reconnection**:
+  - Fixed time reconnection: 9:00, 13:30, 21:00定时重建会话
+  - Exception reconnection: Automatically reconnects when connection异常during trading sessions
+  - Daily reset: 21:20 automatically clears reconnection records, optimizes night session trading experience
+- **Trading Time Identification**: Intelligently judges day/night trading sessions
+- **Holiday Identification**: Combines web calendar to判断trading days and holidays
 
-### 交易执行
-- **四向交易**：完整支持开多、开空、平多、平空
-- **智能平仓**：遵循先平今再平昨的规则，自动处理持仓分离
-- **实时持仓**：提供详细的持仓信息查询（多仓、空仓、今仓、昨仓）
-- **资金管理**：实时获取账户可用资金与总资金
-- **订单管理**：支持订单查询与状态跟踪
-- **成交记录**：自动保存所有成交记录，支持交易数据分析和回查
-- **数据持久化**：新增CSV文件保存功能，自动记录交易、订单、持仓和账户数据
+### Trading Execution
+- **Four-way Trading**: Complete support for long open, short open, long close, short close
+- **Intelligent Position Closing**: Follows close today then close yesterday rules, automatically handles position separation
+- **Real-time Positions**: Provides detailed position information query (long, short, today, yesterday positions)
+- **Fund Management**: Real-time获取account available funds and total funds
+- **Order Management**: Supports order query and status tracking
+- **Trade Records**: Automatically saves all trade records, supports trading data analysis and review
+- **Data Persistence**: New CSV file saving function, automatically records trading, order, position and account data
 
-## 当前进度
+## Current Progress
 
-✅ **已完成**
-- **天勤连接（MyStore）**：完整的连接管理与重连机制
-- **实时行情到 Backtrader 的 DataFeed 打通（Mydatafeed）**：支持 tick 数据转分钟 K 线
-- **Broker 代理商功能完善**：
-  - 完整的持仓管理（多仓/空仓，今仓/昨仓分离）
-  - 四向交易功能：开多、开空、平多、平空
-  - 智能平仓逻辑（先平今再平昨）
-  - 资金账户管理（可用资金、总资金查询）
-- **分钟级 K 线合成与推送**：实时 OHLCV + 买卖价数据
-- **日线聚合功能**：新增`Dailyfeed`支持夜盘21:00到次日15:00的K线聚合
-- **交易时间管理系统**：支持多品种交易时段识别
-- **智能重连机制**：定时重连（9:00、13:30、21:00）+ 异常重连，优化夜盘重连时间
-- **实盘示例策略**：双均线策略完整可运行
-- **历史数据加载**：实盘启动时自动加载历史数据，支持技术指标初始化
-- **历史数据阶段控制**：策略可识别并跳过历史数据阶段，避免历史数据触发交易信号
-- **成交记录保存**：自动保存所有成交记录，支持交易数据持久化和后续分析
-- **CSV数据持久化**：新增交易数据自动保存功能，包括订单、持仓、账户等信息
+✅ **Completed**
+- **Tianqin Connection (MyStore)**: Complete connection management and reconnection mechanism
+- **Real-time Market Data to Backtrader DataFeed Integration (Mydatafeed)**: Supports tick data to minute K-line conversion
+- **Broker Agent Function完善**:
+  - Complete position management (long/short positions, today/yesterday position separation)
+  - Four-way trading functions: long open, short open, long close, short close
+  - Intelligent position closing logic (close today first, then close yesterday)
+  - Fund account management (available funds, total funds query)
+- **Minute-level K-line Synthesis and Push**: Real-time OHLCV + bid/ask data
+- **Daily Aggregation Function**: New `Dailyfeed` supports K-line aggregation from night session 21:00 to next day 15:00
+- **Trading Time Management System**: Supports multi-product trading session identification
+- **Intelligent Reconnection Mechanism**: Timed reconnection (9:00, 13:30, 21:00) + exception reconnection, optimizes night session reconnection time
+- **Live Trading Example Strategy**: Dual moving average strategy complete and runnable
+- **Historical Data Loading**: Automatically loads historical data at live trading startup, supports technical indicator initialization
+- **Historical Data Phase Control**: Strategy can identify and skip historical data phase, avoids triggering trading signals on historical data
+- **Trade Record Saving**: Automatically saves all trade records, supports trading data persistence and subsequent analysis
+- **CSV Data Persistence**: New trading data automatic saving function, including orders, positions, account and other information
 
-🔄 **进行中**
-- 数据持久化与本地行情落盘
-- 移仓换月功能开发
-- 策略性能优化
+🔄 **In Progress**
+- Data persistence and local market data storage
+- Position transfer and contract rollover function development
+- Strategy performance optimization
 
-📋 **待办**
-- 日志与监控系统完善
-- 更多策略示例与文档
-- 异常处理与容错机制增强
-- 性能优化与稳定性提升
+📋 **Todo**
+- Log and monitoring system完善
+- More strategy examples and documentation
+- Exception handling and fault tolerance mechanism enhancement
+- Performance optimization and stability improvement
 
-## 使用示例
+## Usage Example
 
-参考（双均线示例）：
+Reference (Dual Moving Average Example):
 
 ```python
 import backtrader as bt
 from tianqin_backtrader.store import MyStore
 
-# 简单双均线策略示例（支持多空双向交易）
-# 逻辑：
-# - 计算短期与长期移动均线
-# - 短均线上穿长均线 -> 产生开多信号
-# - 短均线下穿长均线 -> 产生开空信号
-# - 反向信号出现时平仓并开反向仓位
+# Simple dual moving average strategy example (supports long/short two-way trading)
+# Logic:
+# - Calculate short-term and long-term moving averages
+# - Short MA crosses above long MA -> generates long open signal
+# - Short MA crosses below long MA -> generates short open signal
+# - When reverse signal appears, close position and open reverse position
 class DualMovingAverage(bt.Strategy):
     params = dict(fast=5, slow=20, datafeed=None)
 
     def __init__(self):
-        # 使用收盘价作为计算源
+        # Use closing price as calculation source
         self.dataclose = self.datas[0].close
-        # 定义移动均线指标
+        # Define moving average indicators
         self.sma_fast = bt.ind.SMA(self.dataclose, period=self.p.fast)
         self.sma_slow = bt.ind.SMA(self.dataclose, period=self.p.slow)
-        # 交叉指标：>0 上穿，<0 下穿，=0 持平
+        # Crossover indicator: >0 upward cross, <0 downward cross, =0 flat
         self.crossover = bt.ind.CrossOver(self.sma_fast, self.sma_slow)
 
     def next(self):
-        # 跳过历史数据阶段，避免在历史数据上产生交易信号
+        # Skip historical data phase to avoid generating trading signals on historical data
         if self.p.datafeed and self.p.datafeed.history_phase:
             return
             
-        # 当前K线时间
+        # Current K-line time
         dt = self.datas[0].datetime.datetime(0)
-        # 获取持仓信息
+        # Get position information
         pos = self.broker.get_account_position(self.data0._name)
         
-        # 上穿信号 - 开多或平空开多
+        # Upward cross signal - long open or close short then long
         if self.crossover > 0:
-            if pos and pos.get('pos_short', 0) > 0:  # 有空仓，先平空
-                print(f"[{dt}] 平空信号: close={self.dataclose[0]:.2f}")
+            if pos and pos.get('pos_short', 0) > 0:  # Have short position, close short first
+                print(f"[{dt}] Close short signal: close={self.dataclose[0]:.2f}")
                 self.broker.buy_close(self.data0._name, pos['pos_short'], self.dataclose[0])
-            print(f"[{dt}] 平空开多: close={self.dataclose[0]:.2f}")
+            print(f"[{dt}] Close short open long: close={self.dataclose[0]:.2f}")
             self.broker.buy_open(self.data0._name, 1, self.data0.ask_price[0])
             
-        # 下穿信号 - 开空或平多开空
+        # Downward cross signal - short open or close long then short
         elif self.crossover < 0:
-            if pos and pos.get('pos_long', 0) > 0:  # 有多仓，先平多
-                print(f"[{dt}] 平多信号: close={self.dataclose[0]:.2f}")
+            if pos and pos.get('pos_long', 0) > 0:  # Have long position, close long first
+                print(f"[{dt}] Close long signal: close={self.dataclose[0]:.2f}")
                 self.broker.sell_close(self.data0._name, pos['pos_long'], self.dataclose[0])
-            print(f"[{dt}] 平多开空: close={self.dataclose[0]:.2f}")
+            print(f"[{dt}] Close long open short: close={self.dataclose[0]:.2f}")
             self.broker.sell_open(self.data0._name, 1, self.bid_price[0])
 
-# 创建引擎
+# Create engine
 cerebro = bt.Cerebro()
-# 连接天勤（请在 MyStore 中配置您的登录信息）
+# Connect to Tianqin (Please configure your login info in MyStore)
 store = MyStore(key='xxxxxx', value='xxxxxxx')
-# 设置经纪商
+# Set broker
 broker = store.getbroker()
 cerebro.setbroker(broker)
-# 订阅合约（示例：上期所铜主力，请按需修改）
-# 分钟线数据
-data = store.getdata(instrument='SHFE.cu2512', lookback=True)  # lookback=True启用历史数据加载
-# 日线数据（夜盘21:00到次日15:00聚合）
+# Subscribe to contract (Example: SHFE copper main contract, modify as needed)
+# Minute line data
+data = store.getdata(instrument='SHFE.cu2512', lookback=True)  # lookback=True enables historical data loading
+# Daily line data (night session 21:00 to next day 15:00 aggregation)
 # daily_data = store.get_daily_data(instrument='SHFE.cu2512', lookback=True)
-# 加载数据与策略
+# Load data and strategy
 cerebro.adddata(data)
-cerebro.addstrategy(DualMovingAverage, datafeed=data)  # 传入datafeed供策略判断历史数据阶段
-# 运行
+cerebro.addstrategy(DualMovingAverage, datafeed=data)  # Pass datafeed for strategy to judge historical data phase
+# Run
 cerebro.run()
 ```
 
-## 注意事项
+## Notes
 
-- **账号配置**：账号 key/value 需替换为你自己的天勤账号信息
-- **风险控制**：实盘前请在仿真环境充分验证，本项目仅做接入示例
-- **网络容错**：已内置重连机制，但建议增加自定义的容错与重试逻辑
-- **交易时段**：系统会自动判断交易时间，非交易时段策略不会执行交易
-- **持仓管理**：支持今仓/昨仓分离，平仓时遵循先平今再平昨的规则
-- **数据质量**：基于 tick 数据合成分钟线，确保网络稳定以获得完整数据
+- **Account Configuration**: Account key/value needs to be replaced with your own Tianqin account information
+- **Risk Control**: Please fully verify in simulation environment before live trading, this project is only for integration example
+- **Network Fault Tolerance**: Reconnection mechanism is built-in, but it is recommended to add custom fault tolerance and retry logic
+- **Trading Sessions**: System will automatically judge trading time, strategy will not execute trades during non-trading sessions
+- **Position Management**: Supports today/yesterday position separation, follows close today first then close yesterday rule when closing positions
+- **Data Quality**: Based on tick data to synthesize minute lines, ensure network stability to get complete data
 
-## 历史数据管理特性
+## Historical Data Management Features
 
-- **自动历史数据加载**：实盘启动时自动加载最近10000分钟的历史K线数据
-- **阶段识别机制**：datafeed内置`history_phase`属性，明确标识当前处于历史数据阶段还是实盘阶段  
-- **策略级控制**：策略可通过判断`datafeed.history_phase`来跳过历史数据阶段，避免在历史数据上误触发交易信号
-- **无缝切换**：历史数据加载完成后自动切换到实盘数据流，确保交易连续性
-- **透明化处理**：用户策略只需简单判断即可实现历史数据阶段跳过，无需复杂处理
+- **Automatic Historical Data Loading**: Automatically loads recent 10000 minutes of historical K-line data when live trading starts
+- **Phase Identification Mechanism**: datafeed has built-in `history_phase` attribute that clearly identifies whether current stage is historical data or live data
+- **Strategy-level Control**: Strategy can skip historical data stage by checking `datafeed.history_phase`, avoids mistakenly triggering trading signals on historical data
+- **Seamless Switching**: Automatically switches to live data stream after historical data loading is complete, ensures trading continuity
+- **Transparent Processing**: User strategy only needs simple judgment to achieve historical data stage skipping, no complex processing required
 
-## 新增特性
+## New Features
 
-- **双向交易**：完整支持开多、开空、平多、平空四向操作
-- **智能平仓**：自动处理今昨仓分离，遵循交易所平仓规则
-- **实时持仓**：提供详细的持仓查询，包括多仓、空仓、今仓、昨仓
-- **资金查询**：实时获取账户可用资金与总资金
-- **买卖价数据**：在 K 线数据中包含实时买卖价信息
-- **交易时段管理**：支持多品种交易时段自动识别
-- **异常处理**：完善的连接异常处理与自动重连机制
-- **历史数据管理**：实盘启动时自动加载历史数据，支持策略初始化
-- **阶段识别控制**：内置历史数据阶段识别，策略可跳过历史数据避免误交易
-- **成交记录管理**：自动保存所有成交记录，支持交易数据持久化和回查分析
-- **日线聚合功能**：新增`Dailyfeed`支持夜盘21:00到次日15:00的K线聚合，符合期货市场交易习惯
-- **CSV数据持久化**：新增交易数据自动保存功能，包括订单、持仓、账户等信息
-- **夜盘重连优化**：重连时间从00:00优化到21:20，更好适应夜盘交易时间
+- **Two-way Trading**: Complete support for long open, short open, long close, short close four-way operations
+- **Intelligent Position Closing**: Automatically handles today/yesterday position separation, follows exchange closing rules
+- **Real-time Positions**: Provides detailed position queries, including long, short, today, yesterday positions
+- **Fund Query**: Real-time gets account available funds and total funds
+- **Bid/Ask Data**: Includes real-time bid/ask information in K-line data
+- **Trading Session Management**: Supports automatic identification of multi-product trading sessions
+- **Exception Handling**: Complete connection exception handling and automatic reconnection mechanism
+- **Historical Data Management**: Automatically loads historical data at live trading startup, supports strategy initialization
+- **Phase Identification Control**: Built-in historical data phase identification, strategy can skip historical data to avoid mistaken trading
+- **Trade Record Management**: Automatically saves all trade records, supports trading data persistence and review analysis
+- **Daily Aggregation Function**: New `Dailyfeed` supports K-line aggregation from night session 21:00 to next day 15:00,符合futures market trading habits
+- **CSV Data Persistence**: New trading data automatic saving function, including orders, positions, account and other information
+- **Night Session Reconnection Optimization**: Reconnection time optimized from 00:00 to 21:20, better adapts to night session trading time
