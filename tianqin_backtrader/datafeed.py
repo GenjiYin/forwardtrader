@@ -54,6 +54,9 @@ class Mydatafeed(bt.feed.DataBase):
         df = data.copy().sort_values("datetime")
         df['datetime'] = df['datetime'].apply(trans_time)
         df = df[df['datetime']>=df[df['datetime'].str.contains(" 21:00")]['datetime'].iloc[0]]
+        sd = df['datetime'].iloc[0]
+        ed = df['datetime'].iloc[-1]
+        print(f"历史数据填充 ====== 开始日期: {sd} ====== 结束日期: {ed} ======")
         for i in range(len(df)):
             msg = df.iloc[i].to_dict()
             msg['datetime'] = date2num(datetime.datetime.strptime(msg['datetime'], '%Y-%m-%d %H:%M:%S'))
