@@ -18,9 +18,6 @@ class DualMovingAverage(bt.Strategy):
     def next(self):
         if self.p.datafeed.history_phase:
             # 跳过回放数据阶段, 以免使用历史数据下单(必须存在, 可以不需要更改)
-            # current_time = self.data.datetime.time()
-            # print(current_time, '时刻close: ', self.data0.close[0], "十五分钟k线: ", self.data1.close[0])
-            # print(current_time, '时刻close: ', self.data0.close[0])
             return
         
         # 订单管理
@@ -36,9 +33,10 @@ class DualMovingAverage(bt.Strategy):
         current_datetime = self.data.datetime.datetime()
         print(current_datetime, '时刻close: ', self.data0.close[0])
         pos = self.broker.get_account_position(self.data0._name)
-        long_pos = pos['pos_long']
-        short_pos = pos['pos_short']
-        print(current_datetime, '可用资金: ', self.broker.getcash(), "总资金: ", self.broker.getvalue())
+        long_pos = pos.get('pos_long', 0)
+        short_pos = pos.get("pos_short", 0)
+        print(current_datetime, '多仓: ', long_pos, '空仓: ', short_pos)
+        # print(current_datetime, '可用资金: ', self.broker.getcash(), "总资金: ", self.broker.getvalue())
         # print(self.data0._name, " 持仓: ", pos)
 
 
@@ -56,7 +54,7 @@ class DualMovingAverage(bt.Strategy):
 # 创建引擎
 cerebro = bt.Cerebro()
 # 连接天勤（请在 MyStore 中配置您的登录信息）
-store = MyStore(key='x6504368', value='q6504368')
+store = MyStore(key='xxxxxxxx', value='xxxxxxxxxxx')
 # 订阅合约分钟（示例：上期所铜主力，请按需修改）
 data = store.getdata(instrument='SHFE.au2512', lookback=20)    # 最多回看40天的分钟k线!!!!
 
