@@ -89,7 +89,7 @@ class Mydatafeed(bt.feed.DataBase):
         while True:
             if self.p.lookback:
                 # 加载历史数据
-                msg = self.qhist.get_nowait()
+                msg = self.qhist.get()
                 if len(msg) != 0:
                     self.lines.datetime[0] = msg['datetime']
                     self.lines.close[0] = msg['close']
@@ -136,7 +136,6 @@ class Mydatafeed(bt.feed.DataBase):
                     continue
                 elif self.mintue_datetime[-1].split(':')[-2] != tick['datetime'].split('.')[0].split(':')[-2]:
                     # 当分钟改变的时候先合成分钟数据, 再清空数据
-                    self._append_tick(tick)
                     self.lines.datetime[0] = self.date2num(datetime.datetime.strptime(tick['datetime'].split('.')[0], '%Y-%m-%d %H:%M:%S'))
                     self.lines.close[0] = self.price[-1]
                     self.lines.open[0] = self.price[0]
@@ -148,6 +147,7 @@ class Mydatafeed(bt.feed.DataBase):
                     self.lines.ask_price[0] = tick['ask_price1']
                     
                     self._clear()
+                    self._append_tick(tick)
                     return True
                 else:
                     self._append_tick(tick)

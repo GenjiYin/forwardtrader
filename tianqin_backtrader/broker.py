@@ -165,5 +165,13 @@ class MyBroker(BrokerBase):
             if order_1 is None and order_2:
                 return [order_2]
     
-    def memory_cache(self):
-        return
+    def cancel_order(self, order_id):
+        self.p.store.tianqin.cancel_order(order_id)
+        self.p.store.tianqin.wait_update()
+        
+    def get_all_orders(self):
+        """获取所有订单"""
+        a = {}
+        for i, j in self.p.store.tianqin.get_order().items():
+            a[i] = dict(j)
+        return a

@@ -148,14 +148,14 @@ class MyStore:
             return None
 
         # 下午保存
-        if now.hour == 15 and now.minute == 0:
+        if now.hour == 14 and now.minute == 59 and now.second == 50:
             print(f"{now} 交易记录保存")
             self._save_csv()
             self.save_done.add(minute_key)
             return None
         
         # 凌晨保存
-        if now.hour == final_time.hour and now.minute == final_time.minute:
+        if now.hour == final_time.hour and now.minute == final_time.minute - 1 and now.second == 50:
             print(f"{now} 交易记录保存")
             self._save_csv()
             self.save_done.add(minute_key)
