@@ -30,7 +30,11 @@ class MyStore:
         
     def getdata(self, instrument, lookback=False):
         self.ins = instrument
-        return Mydatafeed(dataname=instrument, store=self, lookback=lookback)
+
+        # 设置开盘时间和收盘时间
+        sessionstart = datetime.time(21, 00, 00)
+        sessionend = datetime.time(15, 00, 00)
+        return Mydatafeed(dataname=instrument, store=self, lookback=lookback, sessionstart=sessionstart, sessionend=sessionend)
     
     def get_daily_data(self, instrument, lookback=False):
         return Dailyfeed(dataname=instrument, store=self, lookback=lookback)

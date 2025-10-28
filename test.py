@@ -18,8 +18,8 @@ class DualMovingAverage(bt.Strategy):
     def next(self):
         if self.p.datafeed.history_phase:
             # 跳过回放数据阶段, 以免使用历史数据下单(必须存在, 可以不需要更改)
-            # current_datetime = self.data.datetime.datetime()
-            # print(current_datetime, '时刻close: ', self.data0.close[0], '日线close: ', self.data1.close[0])
+            current_datetime = self.data.datetime.datetime()
+            print(current_datetime, '时刻close: ', self.data0.close[0], '日线close: ', self.data1.close[0])
             return
         
         # 订单管理
@@ -30,31 +30,31 @@ class DualMovingAverage(bt.Strategy):
                 self.broker.cancel_order(order)
         
 
-        # 当前K线时间
-        current_time = self.data.datetime.time()
-        current_datetime = self.data.datetime.datetime()
-        print(current_datetime, '时刻close: ', self.data0.close[0])
-        pos = self.broker.get_account_position(self.data0._name)
-        long_pos = pos.get('pos_long', 0)
-        short_pos = pos.get("pos_short", 0)
-        print(current_datetime, '多仓: ', long_pos, '空仓: ', short_pos)
-        # print(current_datetime, '可用资金: ', self.broker.getcash(), "总资金: ", self.broker.getvalue())
-        # print(self.data0._name, " 持仓: ", pos)
+        # # 当前K线时间
+        # current_time = self.data.datetime.time()
+        # current_datetime = self.data.datetime.datetime()
+        # print(current_datetime, '时刻close: ', self.data0.close[0])
+        # pos = self.broker.get_account_position(self.data0._name)
+        # long_pos = pos.get('pos_long', 0)
+        # short_pos = pos.get("pos_short", 0)
+        # print(current_datetime, '多仓: ', long_pos, '空仓: ', short_pos)
+        # # print(current_datetime, '可用资金: ', self.broker.getcash(), "总资金: ", self.broker.getvalue())
+        # # print(self.data0._name, " 持仓: ", pos)
 
-        if len(pos) == 0:
-            # 空仓时开空一手
-            print(current_datetime, '开空')
-            self.open_orders = self.broker.sell_open(self.data0._name, 1, self.data0.ask_price[0])
-        else:
-            # 多仓时平空一手
-            print(current_datetime, '平空')
-            self.sell_orders = self.broker.buy_close(self.data0._name, 1, self.data0.bid_price[0])
+        # if len(pos) == 0:
+        #     # 空仓时开空一手
+        #     print(current_datetime, '开空')
+        #     self.open_orders = self.broker.sell_open(self.data0._name, 1, self.data0.ask_price[0])
+        # else:
+        #     # 多仓时平空一手
+        #     print(current_datetime, '平空')
+        #     self.sell_orders = self.broker.buy_close(self.data0._name, 1, self.data0.bid_price[0])
 
         
 # 创建引擎
 cerebro = bt.Cerebro()
 # 连接天勤（请在 MyStore 中配置您的登录信息）
-store = MyStore(key='xxxxxxxxxxxx', value='xxxxxxxxxxxxxxxx')
+store = MyStore(key='x6504368', value='q6504368')
 # 订阅合约分钟（示例：上期所铜主力，请按需修改）
 data = store.getdata(instrument='SHFE.au2512', lookback=20)    # 最多回看40天的分钟k线!!!!
 
@@ -63,7 +63,7 @@ broker = store.getbroker()
 cerebro.setbroker(broker)
 # 加载数据与策略
 cerebro.adddata(data)
-cerebro.resampledata(data, timeframe=bt.TimeFrame.Minutes, compression=15)
+cerebro.resampledata(data, timeframe=bt.TimeFrame.Days, compression=1)
 cerebro.addstrategy(DualMovingAverage, datafeed=data)
 # 运行
 cerebro.run()
