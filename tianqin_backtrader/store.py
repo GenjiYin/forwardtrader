@@ -93,22 +93,22 @@ class MyStore:
         可选: trade、order、position、account
         """
         if save_type == 'trade':
-            data = pd.DataFrame([dict(i) for i in self.api.get_trade().values()])
+            data = pd.DataFrame([dict(i) for i in self.tianqin.get_trade().values()])
             if len(data) == 0:
                 return
             data['trade_date_time'] = data['trade_date_time'].apply(lambda x: datetime.datetime.fromtimestamp(x / 10**9).strftime('%Y-%m-%d %H:%M:%S'))
         elif save_type == 'order':
-            data = pd.DataFrame([dict(i) for i in self.api.get_order().values()])
+            data = pd.DataFrame([dict(i) for i in self.tianqin.get_order().values()])
             if len(data) == 0:
                 return
             data['insert_date_time'] = data['insert_date_time'].apply(lambda x: datetime.datetime.fromtimestamp(x / 10**9).strftime('%Y-%m-%d %H:%M:%S'))
         elif save_type == 'position':
-            data = pd.DataFrame([dict(i) for i in self.api.get_position().values()])
+            data = pd.DataFrame([dict(i) for i in self.tianqin.get_position().values()])
             if len(data) == 0:
                 return
             data['date'] = datetime.datetime.now().strftime('%Y-%m-%d')
         elif save_type == 'account':
-            data = pd.DataFrame([{k: v for k, v in zip(list(self.api.get_account().keys()), list(self.api.get_account().values()))}])
+            data = pd.DataFrame([{k: v for k, v in zip(list(self.tianqin.get_account().keys()), list(self.tianqin.get_account().values()))}])
             if len(data) == 0:
                 return
             data['date'] = datetime.datetime.now().strftime('%Y-%m-%d')
@@ -137,27 +137,34 @@ class MyStore:
         sessions = CLASS_SESSIONS.get(self.ins.split('.')[-1][:2].upper())
         final_time = sessions[-1][-1]
         final_time = datetime.datetime.strptime(final_time, "%H:%M")
-        clear_time = final_time + datetime.timedelta(minutes=1)
+        start_time = datetime.datetime.strptime(sessions[-1][0], "%H:%M")
+        clear_time = start_time + datetime.timedelta(minutes=1)
 
         now = datetime.datetime.now()
         minute_key = now.strftime("%H:%M")  # 例如 "09:00"
 
-        if now.hour == clear_time.hour and now.minute == clear_time.minute:
+        if now.hour == clear_time.hour and now.minute == clear_time.minute and minute_key not in self.save_done:
             self.save_done.clear()
             self.save_done.add(minute_key)
             return None
 
         # 下午保存
-        if now.hour == 14 and now.minute == 59 and now.second == 50:
+        if now.hour == 14 and now.minute == 59 and minute_key not in self.save_done:
             print(f"{now} 交易记录保存")
-            self._save_csv()
+            self._save_csv('order')
+            self._save_csv('trade')
+            self._save_csv('position')
+            self._save_csv('account')
             self.save_done.add(minute_key)
             return None
         
         # 凌晨保存
-        if now.hour == final_time.hour and now.minute == final_time.minute - 1 and now.second == 50:
+        if now.hour == final_time.hour and now.minute == final_time.minute - 1 and minute_key not in self.save_done:
             print(f"{now} 交易记录保存")
-            self._save_csv()
+            self._save_csv('order')
+            self._save_csv('trade')
+            self._save_csv('position')
+            self._save_csv('account')
             self.save_done.add(minute_key)
             return None
         

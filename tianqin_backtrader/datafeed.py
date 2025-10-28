@@ -7,7 +7,7 @@ from backtrader.utils import date2num
 from .session_calendar import is_trading_time, is_trading_daily, is_trading_night
 
 """
-核对一下成交量的聚合方式
+需要详细检查一下历史数据
 """
 
 class Mydatafeed(bt.feed.DataBase):
@@ -112,26 +112,33 @@ class Mydatafeed(bt.feed.DataBase):
             else:
                 now = datetime.datetime.now()
 
-                if (self.trading_daily is None or self.trading_night is None) or (now.hour==8 and now.minute==56):
-                    # 判断早夜盘是否存在
-                    self.trading_daily = is_trading_daily()
-                    self.trading_night = is_trading_night()
+                # if (self.trading_daily is None) or (now.hour==8 and now.minute==56):
+                #     # 判断早早盘盘是否存在
+                #     self.trading_daily = is_trading_daily()
+                #     self.trading_night = is_trading_night()
 
-                if not self.trading_daily:   # 早盘没有那夜盘也一般没有
-                    # print("非交易日")
-                    continue
+                # if not self.trading_daily:   # 早盘没有那夜盘也一般没有
+                #     # print("非交易日")
+                #     continue
 
                 if not is_trading_time(self.p.dataname):
                     # 非交易时间段, 不管
                     # print("非交易时间段")
                     continue
                 
-                self.p.store._fix_time_reconnect()
-                self.p.store.save()
+                self.p.store._fix_time_reconnect()     # 开盘重新启动
+                self.p.store.save()                    # 数据保存
 
                 tick = self.p.store.tianqin.get_quote(self.p.dataname)
-                for _ in range(2):
+                false_count = 0
+                for _ in range(3):
                     ok = self.p.store.tianqin.wait_update(deadline=time.time()+5)
+                    if not ok:
+                        print("==================重连中========================")
+                        false_count += 1
+                if false_count == 3:
+                    # 连续三次都重连不上说明不是交易日
+                    continue
                 
                 if len(self.price) == 0:
                     # 没有数据的时候添加数据
