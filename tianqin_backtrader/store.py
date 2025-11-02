@@ -1,6 +1,7 @@
 import backtrader as bt
 from tqsdk import TqApi, TqSim, TqAuth, TqKq
-from .datafeed import Mydatafeed, Dailyfeed
+from .datafeed import Mydatafeed
+from .datafeed_v2 import Mydatafeed_v2, TickDataFeed
 from .session_calendar import CLASS_SESSIONS
 from .broker import MyBroker
 import time
@@ -9,7 +10,7 @@ import pandas as pd
 import os
 
 class MyStore:
-    def __init__(self, key='xxxxx', value='xxxxxx'):
+    def __init__(self, key='xxxxx', value='xxxxxx', strategy_name=""):
         print("天勤量化连接中......")
         self.key = key
         self.value = value
@@ -21,7 +22,7 @@ class MyStore:
 
         # 新建一个文件夹专门用来储存持仓、订单成交情况、委托单
         current_dir = os.getcwd()
-        self.save_path = os.path.join(current_dir, 'order_file')
+        self.save_path = os.path.join(current_dir, strategy_name)
         if not os.path.exists(self.save_path):
             os.makedirs(self.save_path)
 
@@ -34,10 +35,13 @@ class MyStore:
         # 设置开盘时间和收盘时间
         sessionstart = datetime.time(21, 00, 00)
         sessionend = datetime.time(15, 00, 00)
-        return Mydatafeed(dataname=instrument, store=self, lookback=lookback, sessionstart=sessionstart, sessionend=sessionend)
+        return Mydatafeed_v2(dataname=instrument, store=self, lookback=lookback, sessionstart=sessionstart, sessionend=sessionend)
     
-    def get_daily_data(self, instrument, lookback=False):
-        return Dailyfeed(dataname=instrument, store=self, lookback=lookback)
+    def getdata_v2(self, instrument, lookback=None):
+        self.ins = instrument
+        sessionstart = datetime.time(21, 00, 00)
+        sessionend = datetime.time(15, 00, 00)
+        return TickDataFeed(dataname=instrument, store=self, lookback=lookback, sessionstart=sessionstart, sessionend=sessionend)
     
     def getbroker(self):
         return MyBroker(store=self)
