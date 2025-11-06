@@ -123,7 +123,7 @@ class hans123(bt.Strategy):
 # 创建引擎
 cerebro = bt.Cerebro()
 # 连接天勤（请在 MyStore 中配置您的登录信息）
-store = MyStore(key='xxxxxxxxxxx', value='xxxxxxxxxxxxx', strategy_name='Hans123策略')
+store = MyStore(key='xxxxxxxxxxxx', value='xxxxxxxxxxxxx', strategy_name='Hans123策略')
 # 订阅合约分钟（示例：上期所铜主力，请按需修改）
 data = store.getdata_v2(instrument='SHFE.cu2512', lookback=True)
 # 加载经济商
