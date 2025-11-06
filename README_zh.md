@@ -16,6 +16,7 @@
   - tianqin_backtrader/
     - store.py：账户与行情连接管理（TqApi 会话、智能重连机制、数据入口）
     - datafeed.py：基于盘口 tick 合成分钟线的数据源，实现 Backtrader DataBase
+    - datafeed_v2.py：新一代数据馈送系统，支持更精确的分钟K线合成与多档买卖价数据
     - broker.py：完整交易执行系统（支持四向交易、智能平仓、持仓管理）
     - session_calendar.py：交易时间判断工具（支持多品种、日夜盘识别）
     - __init__.py：对外导出
@@ -73,6 +74,11 @@ jupyter notebook test.ipynb
 ### 数据流特性
 - **实时行情**：使用 TqKq 通道 + `wait_update` 拉取最新 tick 数据
 - **分钟合成**：按分钟变更自动合成 K 线（OHLCV + 买卖价 + 持仓量）
+- **新一代数据馈送系统 (datafeed_v2)**：
+  - **精确的分钟K线合成**：基于tick数据精确合成分钟线，包含真实的开高低收价格
+  - **多档买卖价数据**：支持 bid_price1/ask_price1 和 bid_price2/ask_price2 多档行情
+  - **智能数据缓存**：内置价格序列缓存，确保分钟线数据的完整性和准确性
+  - **Tick级数据处理**：实时收集tick数据，按分钟精确聚合OHLCV数据
 - **日线聚合**：新增`Dailyfeed`支持夜盘21:00到次日15:00的K线聚合，符合期货市场交易习惯
 - **买卖价数据**：实时提供 bid/ask 价格，支持高频策略
 - **多品种支持**：支持商品期货、金融期货等多品种交易
@@ -107,6 +113,10 @@ jupyter notebook test.ipynb
 ✅ **已完成**
 - **天勤连接（MyStore）**：完整的连接管理与重连机制
 - **实时行情到 Backtrader 的 DataFeed 打通（Mydatafeed）**：支持 tick 数据转分钟 K 线
+- **新一代数据馈送系统（datafeed_v2）**：
+  - 精确的分钟K线合成与Tick级数据处理
+  - 多档买卖价数据支持（bid_price1/ask_price1, bid_price2/ask_price2）
+  - 智能数据缓存与价格序列管理
 - **Broker 代理商功能完善**：
   - 完整的持仓管理（多仓/空仓，今仓/昨仓分离）
   - 四向交易功能：开多、开空、平多、平空
@@ -236,3 +246,8 @@ cerebro.run()
 - **日线聚合功能**：新增`Dailyfeed`支持夜盘21:00到次日15:00的K线聚合，符合期货市场交易习惯
 - **CSV数据持久化**：新增交易数据自动保存功能，包括订单、持仓、账户等信息
 - **夜盘重连优化**：重连时间从00:00优化到21:20，更好适应夜盘交易时间
+- **新一代数据馈送系统（datafeed_v2）**：
+  - **Mydatafeed_v2**: 支持更精确的分钟K线合成
+  - **TickDataFeed**: 基于tick数据的实时行情处理
+  - **多档行情数据**: 支持 bid_price1/ask_price1 和 bid_price2/ask_price2
+  - **智能缓存机制**: 内置价格序列缓存，确保数据完整性

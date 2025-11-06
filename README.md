@@ -16,6 +16,7 @@ Integrate Tianqin quantitative market data and trading accounts with Backtrader,
   - tianqin_backtrader/
     - store.py: Account and market connection management (TqApi session, intelligent reconnection, data entry)
     - datafeed.py: Tick-based minute bar data source, implements Backtrader DataBase
+    - datafeed_v2.py: Next-generation data feed system with precise minute bar synthesis and multi-level bid/ask data
     - broker.py: Complete trading execution system (supports four-way trading, intelligent position closing, position management)
     - session_calendar.py: Trading time judgment tool (supports multiple products, day/night session identification)
     - __init__.py: External exports
@@ -73,6 +74,11 @@ jupyter notebook test.ipynb
 ### Data Flow Features
 - **Real-time Market Data**: Uses TqKq channel + `wait_update` to pull latest tick data
 - **Minute Synthesis**: Automatically synthesizes K-lines by minute change (OHLCV + bid/ask + open interest)
+- **Next-Generation Data Feed System (datafeed_v2)**:
+  - **Precise Minute Bar Synthesis**: Accurate minute bar synthesis based on tick data with real OHLCV prices
+  - **Multi-level Bid/Ask Data**: Support for bid_price1/ask_price1 and bid_price2/ask_price2 multi-level quotes
+  - **Smart Data Caching**: Built-in price series caching to ensure minute bar data integrity and accuracy
+  - **Tick-level Data Processing**: Real-time tick data collection with precise OHLCV aggregation by minute
 - **Daily Aggregation**: New `Dailyfeed` supports K-line aggregation from night session 21:00 to next day 15:00,符合futures market trading habits
 - **Bid/Ask Data**: Real-time provides bid/ask prices, supports high-frequency strategies
 - **Multi-product Support**: Supports commodity futures, financial futures and other multi-product trading
@@ -107,6 +113,10 @@ jupyter notebook test.ipynb
 ✅ **Completed**
 - **Tianqin Connection (MyStore)**: Complete connection management and reconnection mechanism
 - **Real-time Market Data to Backtrader DataFeed Integration (Mydatafeed)**: Supports tick data to minute K-line conversion
+- **Next-Generation Data Feed System (datafeed_v2)**:
+  - Precise minute bar synthesis and tick-level data processing
+  - Multi-level bid/ask data support (bid_price1/ask_price1, bid_price2/ask_price2)
+  - Smart data caching and price series management
 - **Broker Agent Function完善**:
   - Complete position management (long/short positions, today/yesterday position separation)
   - Four-way trading functions: long open, short open, long close, short close
@@ -236,3 +246,8 @@ cerebro.run()
 - **Daily Aggregation Function**: New `Dailyfeed` supports K-line aggregation from night session 21:00 to next day 15:00,符合futures market trading habits
 - **CSV Data Persistence**: New trading data automatic saving function, including orders, positions, account and other information
 - **Night Session Reconnection Optimization**: Reconnection time optimized from 00:00 to 21:20, better adapts to night session trading time
+- **Next-Generation Data Feed System (datafeed_v2)**:
+  - **Mydatafeed_v2**: Supports more precise minute bar synthesis
+  - **TickDataFeed**: Real-time tick data processing
+  - **Multi-level Market Data**: Support for bid_price1/ask_price1 and bid_price2/ask_price2
+  - **Smart Caching Mechanism**: Built-in price series caching to ensure data integrity
