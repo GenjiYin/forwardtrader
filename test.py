@@ -1,70 +1,153 @@
 import backtrader as bt
 import datetime
 from tianqin_backtrader.store import MyStore
+import time
 
-# 简单双均线策略示例
-# 逻辑：
-# - 计算短期与长期移动均线
-# - 短均线上穿长均线 -> 产生买入信号
-# - 短均线下穿长均线 -> 产生卖出/平仓信号
+# hans123策略实盘
 
-class DualMovingAverage(bt.Strategy):
-    params = dict(fast=5, slow=20, datafeed=None)
+"""
+注意事项: 
+1. 铜开一手很贵, 非常贵, 请谨慎使用
+2. 平今仓的手续费很高: 每手6块钱的最低费用, 外加万分之一的手续费
+3. 不建议周五的时候开启程序, 周五夜盘直到凌晨, 平时铜夜盘是三点, 意味着可能留仓位在手上, 隔夜风险极大(贵金属就是这样的, 没办法)
+4. 行情推送速度极快, 不建议手动干预下单过程
+总结: 量力而行, 样例仅供参考, 盈亏自负
+"""
 
+class breakpoint(bt.Indicator):
+    params = (
+        ("N", 15),
+    )
+    lines = ("upper", "lower", )
     def __init__(self):
-        self.dataclose = self.datas[0].close
-        # self.mov = bt.ind.SMA(self.dataclose, period=15)
-        self.index = 0
+        self.addminperiod(self.params.N+1)
+
+    def next(self):
+        dt_1 = datetime.datetime.combine(datetime.date(1, 1, 1), datetime.time(9, 0)) + datetime.timedelta(minutes=self.params.N)
+        dt_2 = datetime.datetime.combine(datetime.date(1, 1, 1), datetime.time(21, 0)) + datetime.timedelta(minutes=self.params.N)
+
+        if (self.data.datetime.time(0).strftime("%H:%M") == dt_1.strftime("%H:%M")) or (self.data.datetime.time(0).strftime("%H:%M") == dt_2.strftime("%H:%M")):
+            self.lines.upper[0] = max(self.data0.high.get(0, self.params.N))
+            self.lines.lower[0] = min(self.data0.low.get(0, self.params.N))
+           
+        else:
+            self.lines.upper[0] = self.lines.upper[-1]
+            self.lines.lower[0] = self.lines.lower[-1]
+
+class hans123(bt.Strategy):
+    params = (
+        ("N", 15), 
+        ("TR", 0.6),
+        ("close_all_minute", 8), 
+        ("datafeed", None)
+    )
+    def __init__(self):
+        self.state = None
+
+        self.bound = breakpoint(self.data1, N=self.params.N)
+
+        self.order_num = 0
+
+        self.LowerAfterEntry = None
+        self.HigherAfterEntry = None
+
+        # 一天只做两手, 输了我认了
+        self.total_open_num = 2
+        self.counter = 0
 
     def next(self):
         if self.p.datafeed.history_phase:
-            # 跳过回放数据阶段, 以免使用历史数据下单(必须存在, 可以不需要更改)
-            print(self.data0.datetime.datetime(), self.data1.datetime.datetime())
+        # 跳过回放数据阶段, 以免使用历史数据下单(必须存在, 可以不需要更改)
             return
         
-        # # 订单管理
-        # orders = self.broker.get_all_orders()
-        # orders_ids = list(orders.keys())
-        # for order in orders_ids:
-        #     if orders[order].get('status', None) == "ALIVE":
-        #         self.broker.cancel_order(order)
-        
-
-        # 当前K线时间
-        current_time = self.data.datetime.time()
+        # 获取当前时间
+        current_time = self.data.datetime.time(0)
         current_datetime = self.data.datetime.datetime()
-        print(current_datetime)
-        # print(self.index, self.data0.datetime.datetime(), self.data1.datetime.datetime(), '时刻黄金的close: ', self.data0.close[0], '时刻铜的close: ', self.data1.close[0])
-        # pos = self.broker.get_account_position(self.data0._name)
-        # long_pos = pos.get('pos_long', 0)
-        # short_pos = pos.get("pos_short", 0)
-        # print(current_datetime, '多仓: ', long_pos, '空仓: ', short_pos)
-        # # print(current_datetime, '可用资金: ', self.broker.getcash(), "总资金: ", self.broker.getvalue())
-        # # print(self.data0._name, " 持仓: ", pos)
 
-        # if len(pos) == 0:
-        #     # 空仓时开空一手
-        #     print(current_datetime, '开空')
-        #     self.open_orders = self.broker.sell_open(self.data0._name, 1, self.data0.ask_price1[0])
-        # else:
-        #     # 多仓时平空一手
-        #     print(current_datetime, '平空')
-        #     self.sell_orders = self.broker.buy_close(self.data0._name, 1, self.data0.bid_price1[0])
-        self.index += 1
+        print(current_datetime, self.bound.upper[0], self.bound.lower[0])
+
+        # 订单管理
+        orders = self.broker.get_all_orders()
+        orders_ids = list(orders.keys())
+        for order in orders_ids:
+            if orders[order].get('status', None) == "ALIVE":
+                self.broker.cancel_order(order)
+
+        # 只允许一个方向的持仓出现
+        pos = self.broker.get_account_position(self.data0._name)
+        long_pos = pos.get('pos_long', 0)
+        short_pos = pos.get("pos_short", 0)
+        pos = long_pos + short_pos
+
+        # 盘前
+        if (current_time >= datetime.time(9, 0) and current_time <= datetime.time(9, self.params.N)) or (current_time >= datetime.time(21, 0) and current_time <= datetime.time(21, self.params.N)):
+            return
+
+        # 尾盘平仓
+        if (current_time >= datetime.time(14, 60-self.params.close_all_minute) and current_time <= datetime.time(15, 0)) or (current_time >= datetime.time(2, 60-self.params.close_all_minute) and current_time <= datetime.time(3, 0)):
+            self.counter = 0
+            if pos>0:
+                self.sell(size=pos)
+                print(current_datetime, '尾盘平多')
+
+            elif pos < 0:
+                self.buy(size=abs(pos))
+                print(current_datetime, '尾盘平空')
+            return
+        
+        # 盘中
+        if self.counter <= self.total_open_num:
+            if pos == 0:
+                if self.data1.high[0] > self.bound.upper[0] and self.data1.open[0] < self.bound.upper[0]:
+                    self.broker.buy_open(self.data0._name, size=3, limit_price=self.data1.high[0] + 50)
+                    print(current_datetime, '开多')
+                    self.counter += 1
+                    return
+                
+                elif self.data1.low[0] < self.bound.lower[0] and self.data1.open[0] > self.bound.lower[0]:
+                    self.broker.sell_open(self.data0._name, size=3, limit_price=self.data1.low[0]-50)
+                    print(current_datetime, "开空")
+                    self.counter += 1
+                    return
+    
+        # 移动止损
+        # 记录多头最低价和空头最高价
+        if pos > 0:
+            self.LowerAfterEntry = self.data1.low[0] if self.LowerAfterEntry is None else max(self.LowerAfterEntry, self.data1.low[0])
+        
+        elif pos < 0:
+            self.HigherAfterEntry = self.data1.high[0] if self.HigherAfterEntry is None else min(self.HigherAfterEntry, self.data1.high[0])
+        else:
+            self.LowerAfterEntry = None
+            self.HigherAfterEntry = None
+            
+        if pos > 0:
+            Myprice = self.LowerAfterEntry - self.data1.open[0] * self.p.TR / 100
+            if self.data1.low[0] <= Myprice:
+                self.sell_close(self.data0._name, size=3, limit_price=self.data1.low[0]-50)
+                print(current_datetime, "多头跟踪止损")
+                return
+
+        if pos < 0:
+            Myprice2 = self.HigherAfterEntry + self.data1.open[0] * self.p.TR / 100
+            if self.data1.high[0] >= Myprice2:
+                self.buy_close(self.data0._name, size=3, limit_price=self.data1.high[0]+50)
+                print(current_datetime, "空头跟踪止损")
+                return
 
         
 # 创建引擎
 cerebro = bt.Cerebro()
 # 连接天勤（请在 MyStore 中配置您的登录信息）
-store = MyStore(key='xxxxxxxxx', value='xxxxxxxxxxxxxx', strategy_name='test')
+store = MyStore(key='x6504368', value='q6504368', strategy_name='Hans123策略')
 # 订阅合约分钟（示例：上期所铜主力，请按需修改）
-data = store.getdata_v2(instrument='SHFE.au2512', lookback=True)   
+data = store.getdata_v2(instrument='SHFE.cu2512', lookback=True)
 # 加载经济商
 broker = store.getbroker()
 cerebro.setbroker(broker)
 # 加载数据与策略
 cerebro.adddata(data)
 cerebro.resampledata(data, timeframe=bt.TimeFrame.Minutes)
-cerebro.addstrategy(DualMovingAverage, datafeed=data)
+cerebro.addstrategy(hans123, datafeed=data)
 # 运行
 cerebro.run()

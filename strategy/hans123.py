@@ -83,13 +83,13 @@ class hans123(bt.Strategy):
         if self.counter <= self.total_open_num:
             if pos == 0:
                 if self.data1.high[0] > self.upper and self.data1.open[0] < self.upper:
-                    self.broker.buy_open(self.data0._name, size=3, limit_price=self.data1.high[0])
+                    self.broker.buy_open(self.data0._name, size=3, limit_price=self.data1.high[0] + 50)
                     print(current_datetime, '开多')
                     self.counter += 1
                     return
                 
                 elif self.data1.low[0] < self.lower and self.data1.open[0] > self.lower:
-                    self.broker.sell_open(self.data0._name, size=3, limit_price=self.data1.low[0])
+                    self.broker.sell_open(self.data0._name, size=3, limit_price=self.data1.low[0]-50)
                     print(current_datetime, "开空")
                     self.counter += 1
                     return
@@ -108,14 +108,14 @@ class hans123(bt.Strategy):
         if self.position.size > 0:
             Myprice = self.LowerAfterEntry - self.data1.open[0] * self.p.TR / 100
             if self.data1.low[0] <= Myprice:
-                self.sell_close(self.data0._name, size=3, limit_price=self.data1.low[0])
+                self.sell_close(self.data0._name, size=3, limit_price=self.data1.low[0]-50)
                 print(current_datetime, "多头跟踪止损")
                 return
 
         if self.position.size < 0:
             Myprice2 = self.HigherAfterEntry + self.data1.open[0] * self.p.TR / 100
             if self.data1.high[0] >= Myprice2:
-                self.buy_close(self.data0._name, size=3, limit_price=self.data1.high[0])
+                self.buy_close(self.data0._name, size=3, limit_price=self.data1.high[0]+50)
                 print(current_datetime, "空头跟踪止损")
                 return
 

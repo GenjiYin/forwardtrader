@@ -67,7 +67,7 @@ class TickDataFeed(bt.feed.DataBase):
                     else:
                         self.p.lookback = False
                         self.history_phase = False
-                        continue
+                        return None
         
         if not is_trading_time(self.p.dataname):
             # 非交易时间段, 不管
