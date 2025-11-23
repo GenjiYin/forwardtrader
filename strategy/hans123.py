@@ -18,7 +18,8 @@ class hans123(bt.Strategy):
     params = (
         ("N", 15), 
         ("TR", 0.6),
-        ("close_all_minute", 8)
+        ("close_all_minute", 8), 
+        ("datafeed", None), 
     )
     def __init__(self):
         self.state = None
